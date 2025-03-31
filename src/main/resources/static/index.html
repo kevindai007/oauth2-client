@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <title>Demo</title>
+    <meta name="description" content=""/>
+    <meta name="viewport" content="width=device-width"/>
+    <base href="/"/>
+    <link rel="stylesheet" type="text/css" href="/webjars/bootstrap/css/bootstrap.min.css"/>
+    <script type="text/javascript" src="/webjars/jquery/jquery.min.js"></script>
+    <script type="text/javascript" src="/webjars/bootstrap/js/bootstrap.min.js"></script>
+</head>
+<body>
+<h1>Demo</h1>
+<div class="container"></div>
+<div class="container unauthenticated">
+    <!--    this endpoint is followed oauth2 standard, the last "/github" means the client config id, it can be found in application.yaml spring.security.oauth2.client.registration.xxx-->
+    With GitHub: <a href="/oauth2/authorization/github">click here</a>
+</div>
+<div class="container unauthenticated">
+    With Google: <a href="/oauth2/authorization/google">click here</a>
+</div>
+<div class="container authenticated" style="display:none">
+    Logged in as: <span id="user"></span>
+    <div>
+        <button onClick="logout()" class="btn btn-primary">Logout</button>
+    </div>
+</div>
+</body>
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+
+    if (token) {
+        localStorage.setItem('jwtToken', token); // or sessionStorage
+        // Optionally: remove the token from URL
+        window.history.replaceState({}, document.title, "/index.html");
+    }
+</script>
+<script type="text/javascript">
+    const storedToken = localStorage.getItem('jwtToken');
+
+    if (storedToken) {
+        $.ajax({
+            url: "/user",
+            method: "GET",
+            headers: {
+                "Authorization": "Bearer " + storedToken
+            },
+            success: function (data) {
+                $("#user").html(data.username);
+                $(".unauthenticated").hide();
+                $(".authenticated").show();
+            },
+            error: function (xhr, status, error) {
+                console.error("Failed to fetch user info:", error);
+            }
+        });
+    } else {
+        console.warn("No token found in localStorage.");
+    }
+
+    var logout = function() {
+        $.post("/logout", function() {
+            $("#user").html('');
+            $(".unauthenticated").show();
+            $(".authenticated").hide();
+        })
+        return true;
+    }
+</script>
+</html>
+
