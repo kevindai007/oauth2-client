@@ -21,7 +21,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
@@ -49,7 +48,7 @@ public class SecurityConfig {
                                 .requestMatchers("/swagger-resources/**").permitAll()
                                 .requestMatchers("/test/**").permitAll()
                                 .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
-                                .requestMatchers("/login").permitAll()
+                                .requestMatchers("/login", "/login/**").permitAll()
                                 .anyRequest().authenticated()
                 )
                 .with(new OAuth2LoginConfigurer<>(), oauth2 ->
@@ -58,8 +57,14 @@ public class SecurityConfig {
                                         userInfo
                                                 .userService(customOAuth2UserService)
                                                 .oidcUserService(customOidcUserService))
+                                .authorizationEndpoint(authorization -> authorization.baseUri("/oauth2/authorization"))
+                                .redirectionEndpoint(redirection -> redirection.baseUri("/login/oauth2/code/*"))
                                 .defaultSuccessUrl("/", true) // we can set oauth2 related configs here
                                 .successHandler(customOAuth2SuccessHandler)
+                                .failureHandler((request, response, exception) -> {
+                                    exception.printStackTrace();
+                                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "OAuth2 Login Failed: " + exception.getMessage());
+                                })
                 )
                 .logout(logout -> logout
                         .logoutUrl("/logout")
@@ -67,15 +72,23 @@ public class SecurityConfig {
                         .invalidateHttpSession(true)
                 )
                 .exceptionHandling(ex -> ex
-                        //For /user and API endpoints: return 401 instead of redirect
-                        .defaultAuthenticationEntryPointFor(
-                                (request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED),
-                                new AntPathRequestMatcher("/user")
-                        )
-                        //Fallback: UI flow still redirects to login page
-                        .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/"))
+                                //For /user and API endpoints: return 401 instead of redirect
+                                .defaultAuthenticationEntryPointFor(
+                                        (request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED),
+                                        new AntPathRequestMatcher("/user")
+                                )
+                                //Fallback: UI flow still redirects to login page
+//                        .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/"))
+                                .authenticationEntryPoint(
+                                        (request, response, authException) -> {
+                                            // This is hit when token exchange or login fails
+                                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                            response.getWriter().write("Login failed: " + authException.getMessage());
+                                        }
+                                )
                 )
-                .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+//                .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.ALWAYS));
         ;
         return http.build();
     }

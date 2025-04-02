@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.kevindai</groupId>
-    <artifactId>oauth2-server</artifactId>
+    <artifactId>oauth2-client</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>oauth2-server</name>
     <description>oauth2-server</description>
