@@ -43,9 +43,9 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 email = oauth2User.getAttribute("email");
                 if (email == null) email = username + "@github.com";
             }
-            case "google" -> {
+            case "kevindai" ->{
+                username = oauth2User.getAttribute("username");
                 email = oauth2User.getAttribute("email");
-                username = oauth2User.getAttribute("name"); // or "email"
             }
             default -> throw new OAuth2AuthenticationException("Unsupported provider: " + registrationId);
         }

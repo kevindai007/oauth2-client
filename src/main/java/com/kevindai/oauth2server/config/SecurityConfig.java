@@ -23,6 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -43,7 +44,8 @@ public class SecurityConfig {
                         authorizeRequests
                                 .requestMatchers("/actuator/**").permitAll()
                                 .requestMatchers("/static/**").permitAll()
-                                .requestMatchers("/").permitAll()
+                                .requestMatchers("/").permitAll().requestMatchers(new RegexRequestMatcher(".*\\.js", null)).permitAll()
+                                .requestMatchers(new RegexRequestMatcher(".*\\.css", null)).permitAll()
                                 .requestMatchers("/index.html").permitAll()
                                 .requestMatchers("/swagger-resources/**").permitAll()
                                 .requestMatchers("/test/**").permitAll()
@@ -87,8 +89,7 @@ public class SecurityConfig {
                                         }
                                 )
                 )
-//                .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-                .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.ALWAYS));
+                .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
         ;
         return http.build();
     }
