@@ -1,62 +1,58 @@
 package com.kevindai.oauth2server.service;
 
+import com.kevindai.base.projcore.exception.BizException;
 import com.kevindai.oauth2server.dto.common.JwtTokenInfo;
-import com.kevindai.oauth2server.dto.user.UserInfoDto;
-import com.kevindai.oauth2server.dto.user.UsersLoginRequestDto;
 import com.kevindai.oauth2server.entity.RefreshTokenEntity;
+import com.kevindai.oauth2server.entity.RoleEntity;
 import com.kevindai.oauth2server.entity.UsersEntity;
+import com.kevindai.oauth2server.exception.AuthErrorCode;
 import com.kevindai.oauth2server.repository.RefreshTokenRepository;
+import com.kevindai.oauth2server.repository.RoleRepository;
+import com.kevindai.oauth2server.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
-import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.function.Function;
 
+@RequiredArgsConstructor
 @Service
 public class JwtService {
-    public static String SECRET_KEY = null;
+    @Value("${jwt.secret-key}")
+    private String SECRET_KEY;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final UserRepository userRepository;
+    private final PermissionService permissionService;
+    private final RoleRepository roleRepository;
 
-    public JwtService(RefreshTokenRepository refreshTokenRepository) {
-        try {
-            KeyGenerator hmacSHA256 = KeyGenerator.getInstance("HmacSHA256");
-            SecretKey secretKey = hmacSHA256.generateKey();
-            SECRET_KEY = Base64.getEncoder().encodeToString(secretKey.getEncoded());
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-        this.refreshTokenRepository = refreshTokenRepository;
-    }
+    public JwtTokenInfo generateToken(Long userId) {
+        UsersEntity usersEntity = userRepository.findById(userId).orElseThrow(() -> new BizException(AuthErrorCode.INVALID_ID_USER_INFO.getErrorCode(), AuthErrorCode.INVALID_ID_USER_INFO.getHttpStatusCode(), AuthErrorCode.INVALID_ID_USER_INFO.getMessage()));
+        List<String> permissions = permissionService.getPermissionsByUserId(userId);
+        List<RoleEntity> roleEntities = roleRepository.findByUserId(userId);
+        List<String> roles = roleEntities.stream().map(RoleEntity::getName).toList();
 
-    public JwtTokenInfo generateAccessToken(UsersLoginRequestDto usersLoginRequestDto, List<String> permissions) {
-        return generateToken(usersLoginRequestDto.getUsername(), permissions);
-    }
-
-    public JwtTokenInfo generateAccessToken(UserInfoDto user, List<String> permissions) {
-        return generateToken(user.getUsername(), permissions);
-    }
-
-    private JwtTokenInfo generateToken(String username, List<String> permissions) {
         String jti = UUID.randomUUID().toString();
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + 1000 * 60 * 60 * 10); // 10 hours
 
         Map<String, Object> claims = new HashMap<>();
-        claims.put("username", username);
+        claims.put("username", usersEntity.getUsername());
         claims.put("permissions", permissions);
+        claims.put("roles", roles);
 
         String token = Jwts.builder()
                 .claims(claims)
-                .subject(username)
+                .subject(usersEntity.getUsername())
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .id(jti)
@@ -111,5 +107,11 @@ public class JwtService {
 
     private Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
+    }
+
+    public static void main(String[] args) throws Exception {
+        KeyGenerator hmacSHA256 = KeyGenerator.getInstance("HmacSHA256");
+        SecretKey secretKey = hmacSHA256.generateKey();
+        System.out.println(Base64.getEncoder().encodeToString(secretKey.getEncoded()));
     }
 }

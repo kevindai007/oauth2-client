@@ -2,14 +2,18 @@ package com.kevindai.oauth2server.service.biz;
 
 import com.kevindai.base.projcore.exception.BizException;
 import com.kevindai.oauth2server.dto.user.UserInfoDto;
+import com.kevindai.oauth2server.entity.RoleEntity;
 import com.kevindai.oauth2server.entity.UsersEntity;
 import com.kevindai.oauth2server.exception.AuthErrorCode;
 import com.kevindai.oauth2server.model.UserPrincipal;
+import com.kevindai.oauth2server.repository.RoleRepository;
 import com.kevindai.oauth2server.repository.UserRepository;
 import com.kevindai.oauth2server.service.PermissionService;
 import io.jsonwebtoken.lang.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -27,6 +31,7 @@ import java.util.List;
 public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final PermissionService permissionService;
+    private final RoleRepository roleRepository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -34,7 +39,11 @@ public class UserService implements UserDetailsService {
         if (user == null) {
             throw new UsernameNotFoundException("User not found");
         }
-        return new UserPrincipal(user);
+        List<RoleEntity> roleEntities = roleRepository.findByUserId(user.getId());
+        List<GrantedAuthority> authorities = roleEntities.stream()
+                .map(role -> (GrantedAuthority) new SimpleGrantedAuthority(role.getName()))
+                .toList();
+        return new UserPrincipal(user, authorities);
     }
 
     public List<UsersEntity> findAll() {

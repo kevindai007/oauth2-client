@@ -9,14 +9,16 @@ import java.util.List;
 
 public class UserPrincipal implements UserDetails {
     private final UsersEntity usersEntity;
+    private final List<GrantedAuthority> authorities;
 
-    public UserPrincipal(UsersEntity usersEntity) {
+    public UserPrincipal(UsersEntity usersEntity, List<GrantedAuthority> authorities) {
         this.usersEntity = usersEntity;
+        this.authorities = authorities;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+        return authorities;
     }
 
     @Override

@@ -30,22 +30,31 @@ spring:
             authorization-grant-type: authorization_code
             redirect-uri: "http://localhost:8080/login/oauth2/code/kevindai"
             scope: read
+          kevindai_oidc:
+            client-id: ${kevindai_oidc_client_id}
+            client-secret: ${kevindai_client_secret}
+            authorization-grant-type: authorization_code
+            redirect-uri: "http://localhost:8080/login/oauth2/code/kevindai_oidc"
+            scope: openid
         provider:
-##          If you're using GitHub as the provider, Spring Boot already knows these URLs. So you actually don’t need to specify them
-#          github:
-##            This is the URL your app redirects the user to when starting the login process
-##            GitHub shows the login page and asks for user consent.
-##            After successful login, GitHub redirects the user back to your app with an authorization code
-#            authorization-uri: https://github.com/login/oauth/authorize
-##            After your app gets the authorization code from GitHub, it exchanges it at this endpoint for an access token
-#            token-uri: https://github.com/login/oauth/access_token
-##            After receiving the access token, Spring Security uses this endpoint to fetch the user’s profile from GitHub
-#            user-info-uri: https://api.github.com/user
+          ##          If you're using GitHub as the provider, Spring Boot already knows these URLs. So you actually don’t need to specify them
+          #          github:
+          ##            This is the URL your app redirects the user to when starting the login process
+          ##            GitHub shows the login page and asks for user consent.
+          ##            After successful login, GitHub redirects the user back to your app with an authorization code
+          #            authorization-uri: https://github.com/login/oauth/authorize
+          ##            After your app gets the authorization code from GitHub, it exchanges it at this endpoint for an access token
+          #            token-uri: https://github.com/login/oauth/access_token
+          ##            After receiving the access token, Spring Security uses this endpoint to fetch the user’s profile from GitHub
+          ##            One more thing,user-info-uri is not the standard OAuth2 endpoint
+          #            user-info-uri: https://api.github.com/user
           kevindai:
             authorization-uri: http://127.0.0.1:8081/oauth2/authorize
             token-uri: http://127.0.0.1:8081/oauth2/token
             user-info-uri: http://127.0.0.1:8081/api/v1/users/user
             user-name-attribute: sub
+          kevindai_oidc:
+            issuer-uri: http://127.0.0.1:8081
 # ...
 server:
   port: 8080
@@ -58,4 +67,5 @@ logging:
     org.springframework.web.client.RestTemplate: DEBUG
     org.springframework.security.web.session: DEBUG
     org.springframework.security.oauth2.client.web: DEBUG
-    org.springframework.security.web.savedrequest: DEBUG
+jwt:
+  secret-key: "2clMsDL5zTEVCl+dJjJ2Fkp2cYE2xE26FYeTNGBFeng="

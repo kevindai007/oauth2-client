@@ -31,6 +31,7 @@ public class CustomOidcUserService implements OAuth2UserService<OidcUserRequest,
         OidcUserService delegate = new OidcUserService();
         OidcUser oidcUser = delegate.loadUser(userRequest);
 
+
         String email = oidcUser.getEmail();
         String username = oidcUser.getFullName(); // Or oidcUser.getPreferredUsername(), etc.
 

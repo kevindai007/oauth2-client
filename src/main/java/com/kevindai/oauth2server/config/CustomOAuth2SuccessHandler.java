@@ -15,7 +15,6 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.List;
 
 @Slf4j
 @Component
@@ -44,7 +43,7 @@ public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler 
             return;
 
         }
-        JwtTokenInfo tokenInfo = jwtService.generateAccessToken(userInfoDto, List.of());
+        JwtTokenInfo tokenInfo = jwtService.generateToken(userInfoDto.getId());
 
 
         //Option A: redirect with token

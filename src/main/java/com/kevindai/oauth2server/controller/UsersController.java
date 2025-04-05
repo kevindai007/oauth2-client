@@ -8,12 +8,14 @@ import com.kevindai.oauth2server.service.UsersService;
 import com.kevindai.oauth2server.service.biz.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+
 
 @RequiredArgsConstructor
 @RestController
@@ -29,8 +31,10 @@ public class UsersController {
 
     /**
      * get current user info
+     *
      * @return
      */
+    @PreAuthorize("hasAuthority('Super Admin')")
     @GetMapping("/user")
     public UserInfoDto getUserInfo() {
         return userService.getCurrentUser();

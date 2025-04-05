@@ -33,7 +33,7 @@ public class UsersService {
         List<String> permissions = permissionService.getPermissionsByUserId(usersEntity.getId());
 
 
-        JwtTokenInfo tokenInfo = jwtService.generateAccessToken(usersLoginRequestDto, permissions);
+        JwtTokenInfo tokenInfo = jwtService.generateToken(usersEntity.getId());
         RefreshTokenEntity refreshTokenEntity = jwtService.generateRefreshToken(usersEntity, permissions);
         return UsersLoginResponseDto.builder()
                 .token(tokenInfo.getToken())
